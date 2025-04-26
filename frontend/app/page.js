@@ -6,11 +6,21 @@ import { useEffect, useState } from "react";
 import Map from "../components/map";
 
 export default function Home() {
-  const [intersections, setIntersections] = useState([{lat: 37.3387, lng: -121.8853}]);
+  // maybe severity as 1-4 scale
+  const [intersections, setIntersections] = useState([{id: 10000, lat: 37.3387, lng: -121.8853, count: 10, severity: 4}]);
+  const [crashInfo, setCrashInfo] = useState(null);
 
   //setIntersections([...intersections, {lat: 37.3387, lng: -121.8853}]);
 
   //const res = axios.get('http://localhost:5000/api/intersections');
+
+  function handleCircleClick(intersectionId, event) {
+    setCrashInfo({lat: 37.3387, lng: -121.8853});
+  }
+
+  function handlePopupClose() {
+    setCrashInfo(null);
+  }
 
   return (
     <div className="flex justify-center items-center flex-col">
@@ -19,7 +29,7 @@ export default function Home() {
           Crash Visualizer
         </h1>
       </div>
-      <Map className="w-200 h-200" intersections={intersections}/>
+      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
     </div>
   );
 
