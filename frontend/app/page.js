@@ -8,12 +8,20 @@ export default function Home() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/hello')
-      .then(res => setMsg(res.data.message))
-      .catch(err => console.error(err));
+    axios.get('http://localhost:5000/api/get_intersection_crashes', {
+      params: {
+        a_street: 'BOYNTON AV',
+        b_street: 'STARBIRD CI'
+      }
+    }).then(response => {
+      console.log(response.data);
+    });
+    
   }, []);
 
-  return <div>{msg}</div>;
+  return <div>{JSON.stringify(msg, null, 2)}
+
+  </div>;
 
   /*return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
