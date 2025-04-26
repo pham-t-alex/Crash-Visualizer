@@ -3,8 +3,27 @@
 import Image from "next/image";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import Map from "../components/map";
 
 export default function Home() {
+  const [intersections, setIntersections] = useState([{lat: 37.3387, lng: -121.8853}]);
+
+  //setIntersections([...intersections, {lat: 37.3387, lng: -121.8853}]);
+
+  //const res = axios.get('http://localhost:5000/api/intersections');
+
+  return (
+    <div className="flex justify-center items-center flex-col">
+      <div>
+        <h1 className="font-bold text-lg">
+          Crash Visualizer
+        </h1>
+      </div>
+      <Map className="w-200 h-200" intersections={intersections}/>
+    </div>
+  );
+
+  /*
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -21,7 +40,7 @@ export default function Home() {
 
   return <div>{JSON.stringify(msg, null, 2)}
 
-  </div>;
+  </div>;*/
 
   /*return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
