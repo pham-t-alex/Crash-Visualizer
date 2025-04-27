@@ -28,7 +28,7 @@ CORS(app)
 # combined.to_csv('combined.csv', index=False)
 
 # create df
-df = pd.read_csv('combined.csv')
+df = pd.read_csv('backend/combined.csv')
 print(df.head())
 print(df.dtypes)
 crashes = df.to_dict(orient='records')
