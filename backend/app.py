@@ -83,5 +83,52 @@ def get_all_intersection_crashes():
 
     return jsonify(intersection_crashes)
 
+# input: intersection id
+# returns: crash, fatality, minor, major injury count
+@app.route('/api/get_intersection_info', methods=['GET'])
+def get_intersection_info():
+    id_str = request.args.get('id')
+    if not id_str:
+        return jsonify({"error": "Missing intersection id"}), 400
+
+    try:
+        intersection_id = int(id_str)
+    except ValueError:
+        return jsonify({"error": "Invalid intersection id"}), 400
+    
+    # filter accidents that were not at an intersection
+    at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
+    at_intersection = at_intersection.dropna(subset=['IntersectionNumber'])
+
+    intersection_crashes = at_intersection[at_intersection['IntersectionNumber'] == intersection_id]
+
+    if intersection_crashes.empty:
+        return jsonify({"error": "Intersection not found"}), 404
+
+    # compute total injuries for each row
+    intersection_crashes['TotalInjuries'] = (
+        intersection_crashes['MinorInjuries'].astype(float) + 
+        intersection_crashes['ModerateInjuries'].astype(float) + 
+        intersection_crashes['SevereInjuries'].astype(float) + 
+        intersection_crashes['FatalInjuries'].astype(float)
+    )
+
+    a_street = intersection_crashes.iloc[0]['AStreetName']
+    b_street = intersection_crashes.iloc[0]['BStreetName']
+    num_crashes = intersection_crashes.shape[0]
+    total_injuries = intersection_crashes['TotalInjuries'].sum()
+    injury_rate = total_injuries / num_crashes
+    deaths = intersection_crashes['FatalInjuries'].sum()
+
+    return jsonify({
+        "a_street": a_street,
+        "b_street": b_street,
+        "num_crashes": int(num_crashes),
+        "total_injuries": int(total_injuries),
+        "injury_rate": injury_rate,
+        "deaths": int(deaths)
+    })
+
+
 if __name__ == '__main__':
     app.run(port=5000)

@@ -13,43 +13,46 @@ export default function Home() {
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
-  function handleCircleClick(intersectionId, event) {
-    setCrashInfo({lat: 37.3387, lng: -121.8853});
-  }
+  // function handleCircleClick(intersectionId, event) {
+  //   setCrashInfo({lat: 37.3387, lng: -121.8853});
+  // }
 
-  function handlePopupClose() {
-    setCrashInfo(null);
-  }
+  // function handlePopupClose() {
+  //   setCrashInfo(null);
+  // }
 
-  async function getIntersectionCrashes() {
-    try {
-      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
-      setIntersections(res.data);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // async function getIntersectionCrashes() {
+  //   try {
+  //     const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+  //     setIntersections(res.data);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
-  useEffect(() => {
-    getIntersectionCrashes();
-  }, []);
+  // useEffect(() => {
+  //   getIntersectionCrashes();
+  // }, []);
 
-  return (
-    <div className="flex justify-center items-center flex-col">
-      <div>
-        <h1 className="font-bold text-lg">
-          Crash Visualizer
-        </h1>
-      </div>
-      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
-    </div>
-  );
+  // return (
+  //   <div className="flex justify-center items-center flex-col">
+  //     <div>
+  //       <h1 className="font-bold text-lg">
+  //         Crash Visualizer
+  //       </h1>
+  //     </div>
+  //     <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
+  //   </div>
+  // );
 
   
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/get_all_intersection_crashes'
+    axios.get('http://localhost:5000/api/get_intersection_info', {params: {
+      id: '22868'
+    }
+  }
     ).then(response => {
       console.log(response.data);
     });
