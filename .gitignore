@@ -1,5 +1,5 @@
 # Dataset
-/backend/crashes.csv
+/backend/*.csv
 
 # Logs
 frontend/logs
