@@ -31,6 +31,8 @@ df = pd.read_csv('combined.csv')
 print(df.head())
 crashes = df.to_dict(orient='records')
 
+intersection_df = pd.DataFrame()
+
 # defining intersection accident counting function
 def count_by_intersection(a_street, b_street):
     street_match = (df['AStreetName'].str.strip().str.upper() == a_street.strip().upper()) & \
@@ -44,6 +46,19 @@ def count_by_intersection(a_street, b_street):
     
     # return number of rows
     return filtered_df.shape[0]
+
+def compute_intersection_df(df):
+    global intersection_df
+    at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
+    at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
+    intersection_df = at_intersection.groupby('IntersectionNumber').size().to_frame('Crashes')
+    intersection_df[['Latitude', 'Longitude', 'AStreetName', 'BStreetName']] = at_intersection.groupby('IntersectionNumber')[['Latitude', 'Longitude', 'AStreetName', 'BStreetName']].first()
+    injury_cols = ['MinorInjuries', 'ModerateInjuries', 'SevereInjuries', 'FatalInjuries']
+    at_intersection[injury_cols] = at_intersection[injury_cols].astype(int)
+    intersection_df[injury_cols] = at_intersection[['IntersectionNumber', 'MinorInjuries', 'ModerateInjuries', 'SevereInjuries', 'FatalInjuries']].groupby('IntersectionNumber')[injury_cols].sum()
+    print(intersection_df.head())
+
+compute_intersection_df(df)
 
 @app.route('/api/hello', methods=['GET'])
 def hello():
@@ -78,23 +93,27 @@ def get_intersection_crashes():
 def get_all_intersection_crashes():
 
     # filter accidents that were not at an intersection
-    at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
-    at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
+    #at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
+    #at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
 
-    at_intersection['Latitude'] = at_intersection['Latitude'].round(5)
-    at_intersection['Longitude'] = at_intersection['Longitude'].round(5)
-
-    grouped = at_intersection.groupby(['IntersectionNumber', 'Latitude', 'Longitude']).size().reset_index(name='count')
+    #grouped = at_intersection.groupby(['IntersectionNumber', 'Latitude', 'Longitude']).size().reset_index(name='count')
 
     intersection_crashes = []
-    for _, row in grouped.iterrows():
+    #for _, row in grouped.iterrows():
+    #    intersection_crashes.append({
+    #        "id": row['IntersectionNumber'],
+    #        "lat": float(row['Latitude']),
+    #        'lng': float(row['Longitude']),
+    #        "count": int(row['count'])
+    #    })
+
+    for index, row in intersection_df.iterrows():
         intersection_crashes.append({
-            "id": row['IntersectionNumber'],
+            "id": int(index),
             "lat": float(row['Latitude']),
             'lng': float(row['Longitude']),
-            "count": int(row['count'])
+            "count": int(row['Crashes'])
         })
-
 
     return jsonify(intersection_crashes)
 
@@ -112,36 +131,39 @@ def get_intersection_info():
         return jsonify({"error": "Invalid intersection id"}), 400
     
     # filter accidents that were not at an intersection
-    at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
-    at_intersection = at_intersection.dropna(subset=['IntersectionNumber'])
+    #at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
+    #at_intersection = at_intersection.dropna(subset=['IntersectionNumber'])
 
-    intersection_crashes = at_intersection[at_intersection['IntersectionNumber'] == intersection_id]
+    #intersection_crashes = at_intersection[at_intersection['IntersectionNumber'] == intersection_id]
 
-    if intersection_crashes.empty:
-        return jsonify({"error": "Intersection not found"}), 404
+    #if intersection_crashes.empty:
+    #    return jsonify({"error": "Intersection not found"}), 404
 
     # compute total injuries for each row
-    intersection_crashes['TotalInjuries'] = (
-        intersection_crashes['MinorInjuries'].astype(float) + 
-        intersection_crashes['ModerateInjuries'].astype(float) + 
-        intersection_crashes['SevereInjuries'].astype(float) + 
-        intersection_crashes['FatalInjuries'].astype(float)
-    )
+    #intersection_crashes['TotalInjuries'] = (
+    #    intersection_crashes['MinorInjuries'].astype(float) + 
+    #    intersection_crashes['ModerateInjuries'].astype(float) + 
+    #    intersection_crashes['SevereInjuries'].astype(float) + 
+    #    intersection_crashes['FatalInjuries'].astype(float)
+    #)
 
-    a_street = intersection_crashes.iloc[0]['AStreetName']
-    b_street = intersection_crashes.iloc[0]['BStreetName']
-    num_crashes = intersection_crashes.shape[0]
-    total_injuries = intersection_crashes['TotalInjuries'].sum()
-    injury_rate = total_injuries / num_crashes
-    deaths = intersection_crashes['FatalInjuries'].sum()
+    #a_street = intersection_crashes.iloc[0]['AStreetName']
+    #b_street = intersection_crashes.iloc[0]['BStreetName']
+    #num_crashes = intersection_crashes.shape[0]
+    #total_injuries = intersection_crashes['TotalInjuries'].sum()
+    #injury_rate = total_injuries / num_crashes
+    #deaths = intersection_crashes['FatalInjuries'].sum()
+
+    intersection = intersection_df.loc[intersection_id]
+    totalInjuries = int(intersection['MinorInjuries'] + intersection['ModerateInjuries'] + intersection['SevereInjuries'] + intersection['FatalInjuries'])
 
     return jsonify({
-        "a_street": a_street,
-        "b_street": b_street,
-        "num_crashes": int(num_crashes),
-        "total_injuries": int(total_injuries),
-        "injury_rate": injury_rate,
-        "deaths": int(deaths)
+        "a_street": intersection['AStreetName'],
+        "b_street": intersection['BStreetName'],
+        "num_crashes": int(intersection['Crashes']),
+        "total_injuries": totalInjuries,
+        "injury_rate": totalInjuries / int(intersection['Crashes']),
+        "deaths": int(intersection['FatalInjuries'])
     })
 
 
