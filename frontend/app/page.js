@@ -16,8 +16,8 @@ export default function Home() {
   async function handleCircleClick(intersectionId, lat, lng, map) {
     try {
       map.panTo({lat, lng});
-
-      const res = await axios.get('http://localhost:5000/api/get_intersection_info', {
+`${process.env.NEXT_PUBLIC_API_URL}/your-endpoint`
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/get_intersection_info`, {
         params: {
           id: intersectionId
         }
@@ -44,7 +44,7 @@ export default function Home() {
 
   async function getIntersectionCrashes() {
     try {
-      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/get_all_intersection_crashes`);
       setIntersections(res.data);
     } catch (error) {
       console.error(error);
