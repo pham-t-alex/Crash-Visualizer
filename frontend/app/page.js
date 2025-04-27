@@ -12,27 +12,23 @@ export default function Home() {
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
-  return (
-    <div className="flex justify-center items-center flex-col">
-      <div>
-        <h1 className="font-bold text-lg">
-          Crash Visualizer
-        </h1>
-      </div>
-      <Map className="w-200 h-200" intersections={intersections}/>
-    </div>
-  );
+  // return (
+  //   <div className="flex justify-center items-center flex-col">
+  //     <div>
+  //       <h1 className="font-bold text-lg">
+  //         Crash Visualizer
+  //       </h1>
+  //     </div>
+  //     <Map className="w-200 h-200" intersections={intersections}/>
+  //   </div>
+  // );
 
-  /*
+  
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/get_intersection_crashes', {
-      params: {
-        a_street: 'BOYNTON AV',
-        b_street: 'STARBIRD CI'
-      }
-    }).then(response => {
+    axios.get('http://localhost:5000/api/get_all_intersection_crashes'
+    ).then(response => {
       console.log(response.data);
     });
     
@@ -40,7 +36,7 @@ export default function Home() {
 
   return <div>{JSON.stringify(msg, null, 2)}
 
-  </div>;*/
+  </div>;
 
   /*return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
