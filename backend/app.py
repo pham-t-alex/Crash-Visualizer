@@ -42,7 +42,7 @@ def get_all_crashes():
     return jsonify(crashes)
 
 # input: the two streets that create the intersection
-# output: the number of crashes at the intersection
+# returns: the number of crashes at the intersection
 @app.route('/api/get_intersection_crashes', methods=['GET'])
 def get_intersection_crashes():
     a_street = request.args.get('a_street')
@@ -59,6 +59,29 @@ def get_intersection_crashes():
         "b_street": b_street,
         "accidents_at_intersection": count
     })
+
+# input: n/a
+# returns: every accident at an intersection
+@app.route('/api/get_all_intersection_crashes', methods=['GET'])
+def get_all_intersection_crashes():
+
+    # filter accidents that were not at an intersection
+    at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
+    at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
+
+    grouped = at_intersection.groupby(['IntersectionNumber', 'Latitude', 'Longitude']).size().reset_index(name='count')
+
+    intersection_crashes = []
+    for _, row in grouped.iterrows():
+        intersection_crashes.append({
+            "id": row['IntersectionNumber'],
+            "lat": float(row['Latitude']),
+            'lng': float(row['Longitude']),
+            "count": int(row['count'])
+        })
+
+
+    return jsonify(intersection_crashes)
 
 if __name__ == '__main__':
     app.run(port=5000)
