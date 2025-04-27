@@ -7,10 +7,9 @@ import Map from "../components/map";
 
 export default function Home() {
   // maybe severity as 1-4 scale
-  const [intersections, setIntersections] = useState([{id: 10000, lat: 37.3387, lng: -121.8853, count: 10, severity: 4}]);
+  // {id: 10000, lat: 37.3387, lng: -121.8853, count: 10}
+  const [intersections, setIntersections] = useState([]);
   const [crashInfo, setCrashInfo] = useState(null);
-
-  //setIntersections([...intersections, {lat: 37.3387, lng: -121.8853}]);
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
@@ -21,6 +20,19 @@ export default function Home() {
   function handlePopupClose() {
     setCrashInfo(null);
   }
+
+  async function getIntersectionCrashes() {
+    try {
+      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+      setIntersections(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    getIntersectionCrashes();
+  }, []);
 
   return (
     <div className="flex justify-center items-center flex-col">

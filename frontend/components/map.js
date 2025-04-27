@@ -19,7 +19,7 @@ export default function Map({className, intersections, onCircleClick, info, onPo
                 <Circle
                     key={id}
                     center={{lat: lat, lng: lng}}
-                    radius={count * 100}
+                    radius={count * 10}
                     options={{ 
                         strokeWeight: 0,
                         fillColor: "#FF0000",
