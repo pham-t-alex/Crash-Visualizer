@@ -45,7 +45,7 @@ export default function Home() {
 
   async function getIntersectionCrashes() {
     try {
-      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes', {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/get_all_intersection_crashes`, {
         params: filterParams
       });
       setIntersections(res.data);
