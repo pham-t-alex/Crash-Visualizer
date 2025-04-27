@@ -81,6 +81,9 @@ def get_all_intersection_crashes():
     at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
     at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
 
+    at_intersection['Latitude'] = at_intersection['Latitude'].round(5)
+    at_intersection['Longitude'] = at_intersection['Longitude'].round(5)
+
     grouped = at_intersection.groupby(['IntersectionNumber', 'Latitude', 'Longitude']).size().reset_index(name='count')
 
     intersection_crashes = []
