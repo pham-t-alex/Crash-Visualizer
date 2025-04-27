@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pandas as pd
 import requests
+from datetime import datetime, time, timedelta
 
 # intialize app
 app = Flask(__name__)
@@ -29,9 +30,8 @@ CORS(app)
 # create df
 df = pd.read_csv('combined.csv')
 print(df.head())
+print(df.dtypes)
 crashes = df.to_dict(orient='records')
-
-intersection_df = pd.DataFrame()
 
 # defining intersection accident counting function
 def count_by_intersection(a_street, b_street):
@@ -48,7 +48,6 @@ def count_by_intersection(a_street, b_street):
     return filtered_df.shape[0]
 
 def compute_intersection_df(df):
-    global intersection_df
     at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
     at_intersection = at_intersection.dropna(subset=['IntersectionNumber', 'Latitude', 'Longitude'])
     intersection_df = at_intersection.groupby('IntersectionNumber').size().to_frame('Crashes')
@@ -56,9 +55,53 @@ def compute_intersection_df(df):
     injury_cols = ['MinorInjuries', 'ModerateInjuries', 'SevereInjuries', 'FatalInjuries']
     at_intersection[injury_cols] = at_intersection[injury_cols].astype(int)
     intersection_df[injury_cols] = at_intersection[['IntersectionNumber', 'MinorInjuries', 'ModerateInjuries', 'SevereInjuries', 'FatalInjuries']].groupby('IntersectionNumber')[injury_cols].sum()
-    print(intersection_df.head())
+    return intersection_df
 
-compute_intersection_df(df)
+def filter_df(df, year_start, year_end, time_start, time_end, vehicle, lighting, weather):
+    filtered_df = df
+
+    if (year_start is not None) and (year_end is not None):
+        filtered_df = filtered_df[filtered_df['CrashDateTime'].apply(lambda x: filter_year(x, year_start, year_end))]
+    
+    if (time_start is not None) and (time_end is not None):
+        filtered_df = filtered_df[filtered_df['CrashDateTime'].apply(lambda x: filter_time(x, time_start, time_end))]
+    
+    if (vehicle is not None):
+        filtered_df = filtered_df[filtered_df['VehicleInvolvedWith'] == vehicle]
+    
+    if (lighting is not None):
+        filtered_df = filtered_df[filtered_df['Lighting'] == lighting]
+    
+    if (weather is not None):
+        filtered_df = filtered_df[filtered_df['Weather'] == weather]
+
+    return filtered_df
+
+def filter_year(str, year_start, year_end):
+    dateTimeObject = process_datetime(str)
+    return (int(year_start) <= dateTimeObject.year) and (dateTimeObject.year <= int(year_end))
+
+def process_datetime(dateTimeObject):
+    parts = dateTimeObject.split(' ')
+    yearParts = parts[0].split('/')
+    timeParts = parts[1].split(':')
+    return datetime(int(yearParts[2]), int(yearParts[0]), int(yearParts[1]), hour_to_24h(int(timeParts[0]), parts[2]), int(timeParts[1]), int(timeParts[2]))
+
+def hour_to_24h(hour, am_pm):
+    if (am_pm == "PM" and hour != 12):
+        return hour + 12
+    if (am_pm == "AM" and hour == 12):
+        return 0
+    return hour
+
+def filter_time(str, time_start_str, time_end_str):
+    dateTimeObject = process_datetime(str)
+    time_start = datetime.combine(datetime.now().date(), time(0, 0, 0)) + timedelta(seconds=int(time_start_str))
+    time_end = datetime.combine(datetime.now().date(), time(0, 0, 0)) + timedelta(seconds=int(time_end_str))
+    if (time_start <= time_end):
+        return (time_start.time() < dateTimeObject.time()) and (dateTimeObject.time() < time_end.time())
+    else:
+        return (time_start.time() < dateTimeObject.time()) or (dateTimeObject.time() < time_end.time())
 
 @app.route('/api/hello', methods=['GET'])
 def hello():
@@ -98,6 +141,17 @@ def get_all_intersection_crashes():
 
     #grouped = at_intersection.groupby(['IntersectionNumber', 'Latitude', 'Longitude']).size().reset_index(name='count')
 
+    year_start = request.args.get('year_start')
+    year_end = request.args.get('year_end')
+    time_start = request.args.get('time_start')
+    time_end = request.args.get('time_end')
+    vehicle = request.args.get('vehicle')
+    lighting = request.args.get('lighting')
+    weather = request.args.get('weather')
+
+
+    intersection_df = compute_intersection_df(filter_df(df, year_start, year_end, time_start, time_end, vehicle, lighting, weather))
+
     intersection_crashes = []
     #for _, row in grouped.iterrows():
     #    intersection_crashes.append({
@@ -130,6 +184,15 @@ def get_intersection_info():
     except ValueError:
         return jsonify({"error": "Invalid intersection id"}), 400
     
+    year_start = request.args.get('year_start')
+    year_end = request.args.get('year_end')
+    time_start = request.args.get('time_start')
+    time_end = request.args.get('time_end')
+    vehicle = request.args.get('vehicle')
+    lighting = request.args.get('lighting')
+    weather = request.args.get('weather')
+    
+
     # filter accidents that were not at an intersection
     #at_intersection = df[df['DirectionFromIntersection'].str.strip().str.lower() == 'at']
     #at_intersection = at_intersection.dropna(subset=['IntersectionNumber'])
@@ -154,6 +217,8 @@ def get_intersection_info():
     #injury_rate = total_injuries / num_crashes
     #deaths = intersection_crashes['FatalInjuries'].sum()
 
+    intersection_df = compute_intersection_df(filter_df(df, year_start, year_end, time_start, time_end, vehicle, lighting, weather))
+
     intersection = intersection_df.loc[intersection_id]
     totalInjuries = int(intersection['MinorInjuries'] + intersection['ModerateInjuries'] + intersection['SevereInjuries'] + intersection['FatalInjuries'])
 
@@ -165,7 +230,6 @@ def get_intersection_info():
         "injury_rate": totalInjuries / int(intersection['Crashes']),
         "deaths": int(intersection['FatalInjuries'])
     })
-
 
 if __name__ == '__main__':
     app.run(port=5000)

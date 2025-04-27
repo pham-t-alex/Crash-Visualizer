@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import Map from "../components/map";
 
 export default function Home() {
-  // maybe severity as 1-4 scale
-  // {id: 10000, lat: 37.3387, lng: -121.8853, count: 10}
   const [intersections, setIntersections] = useState([]);
   const [crashInfo, setCrashInfo] = useState(null);
+  const [filterParams, setFilterParams] = useState({year_start: 2011, year_end: 2025, time_start: 0, time_end: 86399});
+  const [circleScale, setCircleScale] = useState(1);
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
@@ -19,7 +19,8 @@ export default function Home() {
 
       const res = await axios.get('http://localhost:5000/api/get_intersection_info', {
         params: {
-          id: intersectionId
+          id: intersectionId,
+          ...filterParams
         }
       });
 
@@ -44,7 +45,9 @@ export default function Home() {
 
   async function getIntersectionCrashes() {
     try {
-      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes', {
+        params: filterParams
+      });
       setIntersections(res.data);
     } catch (error) {
       console.error(error);
@@ -55,14 +58,154 @@ export default function Home() {
     getIntersectionCrashes();
   }, []);
 
+  function updateYear(is_start, value) {
+    if (is_start) {
+      filterParams.year_start = value;
+    }
+    else {
+      filterParams.year_end = value;
+    }
+    getIntersectionCrashes();
+  }
+
+  function updateTime(is_start, value) {
+    if (is_start) {
+      filterParams.time_start = value;
+    }
+    else {
+      filterParams.time_end = value;
+    }
+    getIntersectionCrashes();
+  }
+
+  function secToTime(sec) {
+    let date = new Date(0, 0, 0);
+    date.setSeconds(sec);
+    let hours = date.getHours();
+    if (hours < 12) {
+      if (hours == 0) {
+        hours = 12;
+      }
+      return `${hours}:${date.getMinutes().toString().padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")} AM`;
+    } else {
+      if (hours != 12) {
+        hours -= 12;
+      }
+      return `${hours}:${date.getMinutes().toString().padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")} PM`;
+    }
+  }
+
+  function updateVehicle(value) {
+    if (value == "") {
+      delete filterParams.vehicle;
+    }
+    else {
+      filterParams.vehicle = value;
+    }
+    getIntersectionCrashes();
+  }
+
+  function updateLighting(value) {
+    if (value == "") {
+      delete filterParams.lighting;
+    }
+    else {
+      filterParams.lighting = value;
+    }
+    getIntersectionCrashes();
+  }
+
+  function updateWeather(value) {
+    if (value == "") {
+      delete filterParams.weather;
+    }
+    else {
+      filterParams.weather = value;
+    }
+    getIntersectionCrashes();
+  }
+
   return (
-    <div className="flex justify-center items-center flex-col">
+    <div className="mt-5 flex justify-center items-center flex-col gap-4">
       <div>
-        <h1 className="font-bold text-lg">
-          Crash Visualizer
+        <h1 className="font-bold text-4xl">
+          San Jose Crash Visualizer
         </h1>
       </div>
-      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
+      <div className="flex items-center flex-col">
+        <p className="font-bold">Circle Scale</p>
+        <input type="range" min="0" max="5" step="0.2" defaultValue="1" onChange={(e) => setCircleScale(e.target.value)} />
+      </div>
+      <div className="flex flex-row w-full">
+        <div className="w-1/2">
+          <div className="flex items-center flex-col">
+            <p className="font-bold">Time</p>
+            <div className="flex flex-row gap-2">
+              <p>Start</p>
+              <input type="range" min="0" max="86399" step="1" defaultValue="0" onChange={(e) => updateTime(true, e.target.value)} />
+              <p>{secToTime(filterParams.time_start)}</p>
+            </div>
+            <div className="flex flex-row gap-2">
+              <p>End</p>
+              <input type="range" min="0" max="86399" step="1" defaultValue="86399" onChange={(e) => updateTime(false, e.target.value)} />
+              <p>{secToTime(filterParams.time_end)}</p>
+            </div>
+          </div>
+        </div>
+        <div className="w-1/2">
+        <div className="flex items-center flex-col">
+            <p className="font-bold">Year</p>
+            <div className="flex flex-row gap-2">
+              <p>Start</p>
+              <input type="range" min="2011" max="2025" step="1" defaultValue="2011" onChange={(e) => updateYear(true, e.target.value)} />
+              <p>{filterParams.year_start}</p>
+            </div>
+            <div className="flex flex-row gap-2">
+              <p>End</p>
+              <input type="range" min="2011" max="2025" step="1" defaultValue="2025" onChange={(e) => updateYear(false, e.target.value)} />
+              <p>{filterParams.year_end}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-row w-full">
+        <div className="w-1/3">
+          <div className="flex items-center flex-col">
+            <p className="font-bold">Involved Vehicle</p>
+            <select onChange={(e) => updateVehicle(e.target.value)}>
+              <option value=""> No Filter </option>
+              <option value="Other Vehicle"> Other Vehicle </option>
+              <option value="Parked Vehicle"> Parked Vehicle </option>
+              <option value="Bike"> Bike </option>
+              <option value="Motorcycle"> Motorcycle </option>
+              <option value="Pedestrian"> Pedestrian </option>
+            </select>
+          </div>
+        </div>
+        <div className="w-1/3">
+          <div className="flex items-center flex-col">
+            <p className="font-bold">Lighting</p>
+            <select onChange={(e) => updateLighting(e.target.value)}>
+              <option value=""> No Filter </option>
+              <option value="Daylight"> Daylight </option>
+              <option value="Dark - Street Light"> Dark - Street Light </option>
+              <option value="Dusk - Dawn"> Dusk - Dawn </option>
+            </select>
+          </div>
+        </div>
+        <div className="w-1/3">
+        <div className="flex items-center flex-col">
+            <p className="font-bold">Weather</p>
+            <select onChange={(e) => updateWeather(e.target.value)}>
+              <option value=""> No Filter </option>
+              <option value="Clear"> Clear </option>
+              <option value="Rain"> Rain </option>
+              <option value="Cloudy"> Cloudy </option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose} circleScale={circleScale}/>
     </div>
   );
 
