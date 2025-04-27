@@ -6,22 +6,44 @@ import { useEffect, useState } from "react";
 import Map from "../components/map";
 
 export default function Home() {
-  const [intersections, setIntersections] = useState([{lat: 37.3387, lng: -121.8853}]);
-
-  //setIntersections([...intersections, {lat: 37.3387, lng: -121.8853}]);
+  // maybe severity as 1-4 scale
+  // {id: 10000, lat: 37.3387, lng: -121.8853, count: 10}
+  const [intersections, setIntersections] = useState([]);
+  const [crashInfo, setCrashInfo] = useState(null);
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
-  // return (
-  //   <div className="flex justify-center items-center flex-col">
-  //     <div>
-  //       <h1 className="font-bold text-lg">
-  //         Crash Visualizer
-  //       </h1>
-  //     </div>
-  //     <Map className="w-200 h-200" intersections={intersections}/>
-  //   </div>
-  // );
+  function handleCircleClick(intersectionId, event) {
+    setCrashInfo({lat: 37.3387, lng: -121.8853});
+  }
+
+  function handlePopupClose() {
+    setCrashInfo(null);
+  }
+
+  async function getIntersectionCrashes() {
+    try {
+      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+      setIntersections(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    getIntersectionCrashes();
+  }, []);
+
+  return (
+    <div className="flex justify-center items-center flex-col">
+      <div>
+        <h1 className="font-bold text-lg">
+          Crash Visualizer
+        </h1>
+      </div>
+      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
+    </div>
+  );
 
   
   const [msg, setMsg] = useState('');

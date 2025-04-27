@@ -1,6 +1,6 @@
-import { GoogleMap, LoadScript, Circle } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Circle, InfoWindow } from "@react-google-maps/api";
 
-export default function Map({className, intersections}) {
+export default function Map({className, intersections, onCircleClick, info, onPopupClose}) {
     
     const center = {
       lat: 37.3387,
@@ -15,17 +15,33 @@ export default function Map({className, intersections}) {
             center={center}
             zoom={10}
             >
-            {intersections.map((item) =>
+            {intersections.map(({id, lat, lng, count, severity}) =>
                 <Circle
-                key={`${item.lat}-${item.lng}`}
-                center={{lat: item.lat, lng: item.lng}}
-                radius={200}
-                options={{ 
-                    strokeWeight: 0,
-                    fillColor: "#FF0000",
-                    fillOpacity: 0.2
-                }}
+                    key={id}
+                    center={{lat: lat, lng: lng}}
+                    radius={count * 10}
+                    options={{ 
+                        strokeWeight: 0,
+                        fillColor: "#FF0000",
+                        fillOpacity: 0.2
+                    }}
+                    onClick={(e) => onCircleClick(id, e)}
                 />
+            )}
+            {info && (
+                <InfoWindow
+                    position={{lat: info.lat, lng: info.lng}}
+                    onCloseClick={onPopupClose}
+                >
+                    <div>
+                        <h1 style={{fontSize: "18px"}}>
+                            Intersection: 
+                        </h1>
+                        <p>
+                            St1 and St2
+                        </p>
+                    </div>
+                </InfoWindow>
             )}
             </GoogleMap>
         </div>
