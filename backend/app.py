@@ -8,14 +8,26 @@ app = Flask(__name__)
 CORS(app)
 
 # first, download data in a csv
-csv_url = 'https://data.sanjoseca.gov/dataset/918fb7f0-60c0-484e-b31c-334d1ec74e92/resource/15408d78-9734-4ea1-b3e5-a0f99568dd9b/download/crashdata2022-present.csv'
-response = requests.get(csv_url)
+csv_url_new = 'https://data.sanjoseca.gov/dataset/918fb7f0-60c0-484e-b31c-334d1ec74e92/resource/15408d78-9734-4ea1-b3e5-a0f99568dd9b/download/crashdata2022-present.csv'
+response = requests.get(csv_url_new)
 
-with open('crashes.csv', 'wb') as f:
+with open('crashes_new.csv', 'wb') as f:
     f.write(response.content)
 
+csv_url_old = 'https://data.sanjoseca.gov/dataset/918fb7f0-60c0-484e-b31c-334d1ec74e92/resource/c19a01f2-33e1-4c66-9498-85d489f90da4/download/crashdata2011-2021.csv'
+response = requests.get(csv_url_old)
+
+with open('crashes_old.csv', 'wb') as f:
+    f.write(response.content)
+
+df1 = pd.read_csv('crashes_old.csv')
+df2 = pd.read_csv('crashes_new.csv')
+
+combined = pd.concat([df1, df2])
+combined.to_csv('combined.csv', index=False)
+
 # create df
-df = pd.read_csv('crashes.csv')
+df = pd.read_csv('combined.csv')
 print(df.head())
 crashes = df.to_dict(orient='records')
 
