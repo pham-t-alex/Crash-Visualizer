@@ -13,55 +13,58 @@ export default function Home() {
 
   //const res = axios.get('http://localhost:5000/api/intersections');
 
-  // function handleCircleClick(intersectionId, event) {
-  //   setCrashInfo({lat: 37.3387, lng: -121.8853});
-  // }
+  async function handleCircleClick(intersectionId, lat, lng, map) {
+    try {
+      map.panTo({lat, lng});
 
-  // function handlePopupClose() {
-  //   setCrashInfo(null);
-  // }
+      const res = await axios.get('http://localhost:5000/api/get_intersection_info', {
+        params: {
+          id: intersectionId
+        }
+      });
 
-  // async function getIntersectionCrashes() {
-  //   try {
-  //     const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
-  //     setIntersections(res.data);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   getIntersectionCrashes();
-  // }, []);
-
-  // return (
-  //   <div className="flex justify-center items-center flex-col">
-  //     <div>
-  //       <h1 className="font-bold text-lg">
-  //         Crash Visualizer
-  //       </h1>
-  //     </div>
-  //     <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
-  //   </div>
-  // );
-
-  
-  const [msg, setMsg] = useState('');
-
-  useEffect(() => {
-    axios.get('http://localhost:5000/api/get_intersection_info', {params: {
-      id: '22868'
+      setCrashInfo({
+        a_street: res.data.a_street,
+        b_street: res.data.b_street,
+        lat: lat,
+        lng: lng,
+        num_crashes: res.data.num_crashes,
+        total_injuries: res.data.total_injuries,
+        injury_rate: res.data.injury_rate,
+        deaths: res.data.deaths
+      });
+    } catch (error) {
+      console.error(error);
     }
   }
-    ).then(response => {
-      console.log(response.data);
-    });
-    
+
+  function handlePopupClose() {
+    setCrashInfo(null);
+  }
+
+  async function getIntersectionCrashes() {
+    try {
+      const res = await axios.get('http://localhost:5000/api/get_all_intersection_crashes');
+      setIntersections(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    getIntersectionCrashes();
   }, []);
 
-  return <div>{JSON.stringify(msg, null, 2)}
-
-  </div>;
+  return (
+    <div className="flex justify-center items-center flex-col">
+      <div>
+        <h1 className="font-bold text-lg">
+          Crash Visualizer
+        </h1>
+      </div>
+      <Map className="w-200 h-200" intersections={intersections} onCircleClick={handleCircleClick} info={crashInfo} onPopupClose={handlePopupClose}/>
+    </div>
+  );
 
   /*return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
